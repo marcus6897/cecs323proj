@@ -52,10 +52,10 @@ public class SampleProject {
         Scanner in = new Scanner(System.in);
         //System.out.print("Name of the database (not the user account): ");
         DBNAME = "cecs323sec5g1";//in.nextLine();
-        //System.out.print("Database user name: ");
-        USER = "cecs323sec5n31";//in.nextLine();
-        //System.out.print("Database password: ");
-        PASS = "yaeri7";//in.nextLine();
+        System.out.print("Database user name: ");
+        USER = in.nextLine();
+        System.out.print("Database password: ");
+        PASS = in.nextLine();
         
         //Constructing the database URL connection string
         DB_URL = DB_URL + DBNAME + "?user="+ USER + "&password=" + PASS;
