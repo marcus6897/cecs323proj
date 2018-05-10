@@ -125,7 +125,7 @@ public class DBMenu {
                         String color = in.next();
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT DISTINCT CONCAT(cus.last_name, ', ', cus.first_name, ' ', cus.middle_name) AS customer_name,(SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Home') AS home_phone,(SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Cell') AS cell_phone,sale.date_of_purchase,car.make, car.model, car.yr FROM cecs323sec5g1.Sales AS sale INNER JOIN cecs323sec5g1.Customers AS cus ON sale.customer_id = cus.customer_id INNER JOIN cecs323sec5g1.Cars AS car ON sale.VIN = car.VIN WHERE (car.color = '" + color + "') AND sale.date_of_purchase BETWEEN DATE_ADD(NOW(), INTERVAL -5 YEAR) AND DATE_ADD(NOW(), INTERVAL -3 YEAR) ORDER BY sale.date_of_purchase DESC";
+                        sql = "SELECT DISTINCT CONCAT(cus.last_name, ', ', cus.first_name, ' ', cus.middle_name) AS customer_name,(SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Home') AS home_phone,(SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Cell') AS cell_phone,sale.date_of_purchase,car.make, car.model, car.yr FROM cecs323sec5g1.Sales AS sale INNER JOIN cecs323sec5g1.Customers AS cus ON sale.customer_id = cus.customer_id INNER JOIN cecs323sec5g1.Cars AS car ON sale.VIN = car.VIN WHERE (car.color != '" + color + "' OR car.color IS NULL) AND sale.date_of_purchase BETWEEN DATE_ADD(NOW(), INTERVAL -5 YEAR) AND DATE_ADD(NOW(), INTERVAL -3 YEAR) ORDER BY sale.date_of_purchase DESC";
                         ResultSet rs = stmt.executeQuery(sql);
                         System.out.printf(displayFormat, "Customer Name", "Home Phone", "Cell Phone", "Date of Purchase", "Make", "Model", "Year");
                         while (rs.next()) {
@@ -167,7 +167,20 @@ public class DBMenu {
                         displayFormat="%-20s%-20s%-20s%-20s%-20s%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT DISTINCT CONCAT(cus.last_name, ', ', cus.first_name, ' ', cus.middle_name) AS customer_name, (SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Home') AS home_phone, (SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Cell') AS cell_phone, sale.date_of_purchase, car.make, car.model, car.yr FROM cecs323sec5g1.Sales AS sale INNER JOIN cecs323sec5g1.Customers AS cus ON sale.customer_id = cus.customer_id INNER JOIN cecs323sec5g1.Cars AS car ON sale.VIN = car.VIN WHERE sale.date_of_purchase BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL -2 YEAR) AND cus.customer_id IN (SELECT customer_id FROM cecs323sec5g1.Sales AS sale WHERE sale.date_of_purchase BETWEEN DATE_ADD(NOW(), INTERVAL -2 YEAR) AND DATE_ADD(NOW(), INTERVAL -4 YEAR))ORDER BY sale.date_of_purchase DESC";
+                        sql = "SELECT DISTINCT CONCAT(cus.last_name, ', ', cus.first_name, ' ', cus.middle_name) AS customer_name,\n" +
+"        (SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Home') AS home_phone,\n" +
+"        (SELECT phone FROM cecs323sec5g1.CPhoneNumbers WHERE customer_id = cus.customer_id AND phone_type = 'Cell') AS cell_phone,\n" +
+"        sale.date_of_purchase,\n" +
+"        car.make, car.model, car.yr\n" +
+"    FROM cecs323sec5g1.Sales AS sale\n" +
+"        INNER JOIN cecs323sec5g1.Customers AS cus\n" +
+"            ON sale.customer_id = cus.customer_id\n" +
+"        INNER JOIN cecs323sec5g1.Cars AS car\n" +
+"            ON sale.VIN = car.VIN\n" +
+"    WHERE sale.date_of_purchase > DATE_ADD(NOW(), INTERVAL -2 YEAR)\n" +
+"            AND cus.customer_id IN\n" +
+"            (SELECT customer_id FROM cecs323sec5g1.Sales AS sale WHERE sale.date_of_purchase <= DATE_ADD(NOW(), INTERVAL -2 YEAR) AND sale.date_of_purchase > DATE_ADD(NOW(), INTERVAL -4 YEAR))\n" +
+"    ORDER BY sale.date_of_purchase DESC";
                         ResultSet rs = stmt.executeQuery(sql);
                         System.out.printf(displayFormat, "Customer Name", "Home Phone", "Cell Phone", "Date of Purchase", "Make", "Model", "Year");
                         while (rs.next()) {
@@ -205,11 +218,11 @@ public class DBMenu {
                         String sql;
                         sql = "SELECT DISTINCT CONCAT(emp.last_name, ', ', emp.first_name, ' ', emp.middle_name) AS employee_name,ass.monthly_salary,(SELECT COUNT(pos.detail_id) FROM cecs323sec5g1.PositionDetails AS pos WHERE pos.assignment_id = ass.assignment_id AND pos.detail_category = 'Certification' ) AS number_of_certifications FROM cecs323sec5g1.Employees AS emp LEFT OUTER JOIN cecs323sec5g1.Assignments AS ass ON ass.assignment_id = emp.cAssignment_id WHERE ass.department = 'Service'";
                         ResultSet rs = stmt.executeQuery(sql);
-                        System.out.printf(displayFormat, "Employee Name", "Monthly Salary", "Position");
+                        System.out.printf(displayFormat, "Employee Name", "Monthly Salary", "Number of Certifications");
                         while (rs.next()) {
                             String en = rs.getString("employee_name");
                             String mo = rs.getString("monthly_salary");
-                            String pos = rs.getString("pos");
+                            String pos = rs.getString("number_of_certifications");
                             System.out.printf(displayFormat,
                             dispNull(en), dispNull(mo), dispNull(pos));
                         }
@@ -219,7 +232,7 @@ public class DBMenu {
                         displayFormat="%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT CONCAT(emp.last_name,', ', emp.first_name,' ', emp.middle_name) AS employee_name,(SELECT COUNT(sale.sale_id) FROM cecs323sec5g1.Sales AS sale WHERE sale.employee_id = emp.employee_id AND (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH))) AS sale_count FROM cecs323sec5g1.Employees AS emp INNER JOIN cecs323sec5g1.Sales AS sale ON sale.employee_id = emp.employee_id WHERE (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH)) ORDER BY sale_count DESC LIMIT 3";
+                        sql = "SELECT DISTINCT CONCAT(emp.last_name,', ', emp.first_name,' ', emp.middle_name) AS employee_name,(SELECT COUNT(sale.sale_id) FROM cecs323sec5g1.Sales AS sale WHERE sale.employee_id = emp.employee_id AND (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH))) AS sale_count FROM cecs323sec5g1.Employees AS emp INNER JOIN cecs323sec5g1.Sales AS sale ON sale.employee_id = emp.employee_id WHERE (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH)) ORDER BY sale_count DESC LIMIT 3";
                         ResultSet rs = stmt.executeQuery(sql);
                         System.out.printf(displayFormat, "Employee Name", "Sale Count");
                         while (rs.next()) {
@@ -234,7 +247,7 @@ public class DBMenu {
                         displayFormat="%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT CONCAT(emp.last_name,', ', emp.first_name,' ', emp.middle_name) AS employee_name,(SELECT IFNULL(SUM(sale.price),0) FROM cecs323sec5g1.Sales AS sale WHERE sale.employee_id = emp.employee_id AND (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH))) AS gross_sales FROM cecs323sec5g1.Employees AS emp INNER JOIN cecs323sec5g1.Sales AS sale ON sale.employee_id = emp.employee_id WHERE (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH)) ORDER BY gross_sales DESC LIMIT 3";
+                        sql = "SELECT DISTINCT CONCAT(emp.last_name,', ', emp.first_name,' ', emp.middle_name) AS employee_name,(SELECT IFNULL(SUM(sale.price),0) FROM cecs323sec5g1.Sales AS sale WHERE sale.employee_id = emp.employee_id AND (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH))) AS gross_sales FROM cecs323sec5g1.Employees AS emp INNER JOIN cecs323sec5g1.Sales AS sale ON sale.employee_id = emp.employee_id WHERE (sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 MONTH)) ORDER BY gross_sales DESC LIMIT 3";
                         ResultSet rs = stmt.executeQuery(sql);
                         System.out.printf(displayFormat, "Employee Name", "Gross Sales");
                         while (rs.next()) {
@@ -277,7 +290,7 @@ public class DBMenu {
                         }
                         menuChoice = 0;
                     }
-                    else if(menuChoice == 11){ //Syntax error
+                    else if(menuChoice == 11){
                         displayFormat="%-20s%-20s%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
@@ -294,7 +307,7 @@ public class DBMenu {
                         }
                         menuChoice = 0;
                     }
-                    else if(menuChoice == 12){ //syntax error
+                    else if(menuChoice == 12){
                         displayFormat="%-20s%-20s%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
@@ -315,7 +328,7 @@ public class DBMenu {
                         displayFormat="%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT DISTINCT DATE_FORMAT(s.date_of_purchase, '%M') AS month,(SELECT COUNT(sale.sale_id) FROM cecs323sec5g1.Sales AS sale INNER JOIN cecs323sec5g1.Cars AS c ON c.VIN = sale.VIN WHERE  DATE_FORMAT(s.date_of_purchase, '%M') = DATE_FORMAT(sale.date_of_purchase, '%M') /**AND sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 YEAR)**/) AS sale_count FROM cecs323sec5g1.Sales AS s INNER JOIN cecs323sec5g1.Cars AS car ON car.VIN = s.VIN /**WHERE s.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 YEAR)**/ ORDER BY sale_count DESC";
+                        sql = "SELECT DISTINCT DATE_FORMAT(s.date_of_purchase, '%M') AS month,(SELECT COUNT(sale.sale_id) FROM cecs323sec5g1.Sales AS sale INNER JOIN cecs323sec5g1.Cars AS c ON c.VIN = sale.VIN WHERE  DATE_FORMAT(s.date_of_purchase, '%M') = DATE_FORMAT(sale.date_of_purchase, '%M') /**AND sale.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 YEAR)**/) AS sale_count FROM cecs323sec5g1.Sales AS s INNER JOIN cecs323sec5g1.Cars AS car ON car.VIN = s.VIN /**WHERE s.date_of_purchase >= DATE_ADD(NOW(), INTERVAL -1 YEAR)**/ ORDER BY sale_count DESC LIMIT 1";
                         ResultSet rs = stmt.executeQuery(sql);
                         System.out.printf(displayFormat, "Month", "Sale Count");
                         while (rs.next()) {
@@ -333,18 +346,21 @@ public class DBMenu {
                         System.out.println("Enter the model: ");
                         String model = in.nextLine();
                         in.next();
-                        displayFormat="%-20s%-20s%-20s\n";
+                        displayFormat="%-20s%-20s%-20s%-20s%-20s%-20s\n";
                         stmt = conn.createStatement();
                         String sql;
-                        sql = "SELECT DISTINCT car.model, car.make, car.yr, car.retail_price AS highest_price, car.invoice_price AS lowest_price, (SELECT COUNT(*) FROM cecs323sec5g1.Cars AS c WHERE  c.VIN NOT IN (SELECT sale.VIN FROM cecs323sec5g1.Sales AS sale) AND c.make = car.make AND c.model = car.model AND c.yr = car.yr AND c.retail_price = car.retail_price AND c.invoice_price = car.invoice_price)AS count FROM cecs323sec5g1.Cars AS car WHERE car.VIN NOT IN (SELECT s.VIN FROM cecs323sec5g1.Sales AS s) AND car.model = '" + model + "'  AND car.make = '" + make + "' ORDER BY make, model, yr DESC";
+                        sql = "SELECT DISTINCT car.model, car.make, car.yr, car.retail_price AS highest_price, car.invoice_price AS lowest_price, (SELECT COUNT(*) FROM cecs323sec5g1.Cars AS c WHERE c.VIN NOT IN (SELECT sale.VIN FROM cecs323sec5g1.Sales AS sale) AND c.make = car.make AND c.model = car.model AND c.yr = car.yr AND c.retail_price = car.retail_price AND c.invoice_price = car.invoice_price) AS count FROM cecs323sec5g1.Cars AS car WHERE car.VIN NOT IN (SELECT s.VIN FROM cecs323sec5g1.Sales AS s) AND car.model = '" + model + "'  AND car.make = '" + make + "' ORDER BY make, model, yr DESC";
                         ResultSet rs = stmt.executeQuery(sql);
-                        System.out.printf(displayFormat, "Highest Price", "Lowest Price", "Count");
+                        System.out.printf(displayFormat, "Make", "Model", "Year", "Highest Price", "Lowest Price", "Number");
                         while (rs.next()) {
+                            String ma = rs.getString("make");
+                            String mod = rs.getString("model");
+                            String yr = rs.getString("yr");
                             String hp = rs.getString("highest_price");
                             String lp = rs.getString("lowest_price");
-                            String co = rs.getString("count");
+                            String num = rs.getString("count");
                             System.out.printf(displayFormat,
-                            dispNull(hp), dispNull(lp), dispNull(co));                            
+                            dispNull(ma), dispNull(mod), dispNull(yr), dispNull(hp), dispNull(lp), dispNull(num));                            
                         }
                         menuChoice = 0;
                     }
